@@ -1,6 +1,6 @@
 import express from 'express'
 import cors from 'cors'
-import { getUser, getFlights } from './database.js';
+import { getUser, getFlights, getUsers, deleteFlight, createUser, deleteUser } from './database.js';
 
 const app = express()
 
@@ -9,11 +9,37 @@ app.use(express.urlencoded({extended: true}));
 app.use(express.static("public"));
 app.use(cors())
 // app.listen(3306)
+
 app.post("/login", async (req, res) => {
     const user = await getUser([req.body.username, req.body.password])
     if (user == null) res.send('error')
     else res.send('success')
   })
+
+app.get("/users", async (req, res) => {
+  const userdata = await getUsers()
+  // console.log(userdata)
+  res.send(userdata)
+})
+
+app.post("/createuser", async (req, res) => {
+  const create_res = await createUser([req.body.username, req.body.password])
+  console.log(create_res)
+  if (create_res) {
+    res.send('success')
+  }
+  else {
+    res.send('error')
+  }
+})
+
+app.delete("/deleteuser/:id", async (req, res) => {
+  const {id} = req.params
+  const userdata = await deleteUser(id)
+  console.log(req.params)
+  res.send(userdata)
+})
+
 
 app.get("/flights", async (req, res) => {
     const flightdata = await getFlights()
@@ -21,20 +47,28 @@ app.get("/flights", async (req, res) => {
   })
   
 app.get("/flights/:id", async (req, res) => {
-    const id = req.params.id
-    const note = await getNote(id)
+    const id = req.body.id
+    const note = await getFlight(id)
     res.send(note)
 })
 
-app.post("/flights", async (req, res) => {
-    const { title, contents } = req.body
-    const note = await createNote(title, contents)
-    res.status(201).send(note)
+app.delete("/flightdelete", async (req, res) => {
+  const id = req.body.id
+  console.log(id)
+  const ret = await deleteFlight(id)
+  res.send(ret)
 })
-app.post("/users", async (req, res) => {
-    const { title, contents } = req.body
-    const note = await createNote(title, contents)
-    res.status(201).send(note)
+
+app.put("/flightupdate", async (req, res) => {
+  const data = req.body
+  const note = await updateFlight(data)
+  res.send(note)
+})
+
+app.post("/flightcreate", async (req, res) => {
+  const data = req.body
+  const note = await createFlight(data)
+  res.send(note)
 })
 
 app.use((err, req, res, next) => {
