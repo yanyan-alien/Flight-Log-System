@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react"
 import Header from "./header"
-import { Table, Form, Button, Stack, Container, Modal } from "react-bootstrap";
+import { Table, Form, Button, Stack, Container, Modal, Alert } from "react-bootstrap";
 import axios from "axios";
 
 async function digestpw(pw) {
@@ -14,12 +14,14 @@ async function digestpw(pw) {
    return hashHex
 }
 
-function Users({login, setlogin}) {
+function Users() {
     const [data, setData] = useState([]);
     const [createData, setCreateData] = useState({uname:'', password:''});
     const [showDelete, setDeleteShow] = useState(false);
     const [showAdd, setAddShow] = useState(false);
     const [id, setId] = useState(-1);
+    const [show, setShow] = useState(false);
+    const [message, setMessage] = useState('Invalid Credentials');
 
     const handleDeleteClose = () => setDeleteShow(false);
     const handleDeleteShow = () => setDeleteShow(true);
@@ -30,8 +32,6 @@ function Users({login, setlogin}) {
     const getUsers = () => {
         axios.get('http://localhost:8080/users')
         .then(function (response) {
-            // Set the data to state, this will trigger a re-render
-            // console.log(response.data)
             setData(response.data);
         })
         .catch(function (error) {
@@ -42,8 +42,6 @@ function Users({login, setlogin}) {
     useEffect(() => {getUsers()}, []);
 
     function createUser(data) {
-        console.log(data)
-        // console.log(event.target[0].value, event.target[1].value)
         digestpw(data.pw).then((digest) => {
             axios.post('http://localhost:8080/createuser', {
                 username: data.uname,
@@ -58,13 +56,17 @@ function Users({login, setlogin}) {
             else {
                 // error handling
                 setCreateData({uname:'', password:''});
-                handleAddClose()
+                // handleAddClose()
+                setMessage('Username already exist')
+                setShow(true)
             }
             })
             .catch(function (error) {
                 setCreateData({uname:'', password:''});
                 console.log(error);
-                handleAddClose()
+                setMessage('Server Error')
+                setShow(true)
+                // handleAddClose()
             })
         })
     }
@@ -72,6 +74,7 @@ function Users({login, setlogin}) {
     function deleteUser() {
         axios.delete(`http://localhost:8080/deleteuser/${id}`)
             .then(function (response) {
+                console.log(response)
             if (response.data==='success') {
                 getUsers()
                 handleDeleteClose()
@@ -103,7 +106,7 @@ function Users({login, setlogin}) {
 
     return (
         <>
-            <Header login={login} setlogin={setlogin}/>
+            <Header/>
             <div className="px-3">
                 <Container>
                     <Stack direction="horizontal" className="my-3 ">
@@ -132,6 +135,7 @@ function Users({login, setlogin}) {
                 <Modal.Body>
                     <Form>
                         <Form.Group className="mb-3" controlId="formGroupEmail">
+                            <Alert variant='danger' className=''show={show}>{message}</Alert>
                             <Form.Label>Username</Form.Label>
                             <Form.Control 
                                 type="text" 

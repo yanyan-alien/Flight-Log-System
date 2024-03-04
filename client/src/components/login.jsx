@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {Form, Button, Container, Row, Col, Alert} from 'react-bootstrap'
 import {useNavigate} from 'react-router-dom'
 import axios from 'axios' 
+import { useAuth } from './auth';
 
 async function digestpw(pw) {
   const encoder = new TextEncoder()
@@ -14,10 +15,11 @@ async function digestpw(pw) {
  return hashHex
 }
 
-function Login({Login, setlogin}) {
+function Login() {
   const [show, setShow] = useState(false);
   const [message, setMessage] = useState('Invalid Credentials');
   const navigate = useNavigate();
+  const { setIsLoggedIn } = useAuth();
 
   function handleSubmit(event) {
     event.preventDefault()
@@ -30,8 +32,10 @@ function Login({Login, setlogin}) {
         password: digest
       })
       .then(function (response) {
-        if (response.data==='success') {
-          setlogin(true)
+        console.log(response)
+        if (response.data.outcome==='success') {
+          localStorage.setItem('token', response.data.token)
+          setIsLoggedIn(true);
           navigate('/flights')
         }
         else {

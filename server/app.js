@@ -1,30 +1,31 @@
 import express from 'express'
 import cors from 'cors'
-import { getUser, getFlights, getUsers, deleteFlight, createUser, deleteUser } from './database.js';
+import { getUser, createUser, deleteUser, getUsers, getFlights, searchFlights, deleteFlight, createFlight, updateFlight } from './database.js';
 
 const app = express()
 
 app.use(express.json());
-app.use(express.urlencoded({extended: true}));
-app.use(express.static("public"));
 app.use(cors())
-// app.listen(3306)
+// app.use(express.urlencoded({extended: true}));
+// app.use(express.static("public"));
+
+const token = 'SIMPLE_TOKEN'
 
 app.post("/login", async (req, res) => {
+    console.log(req.body)
     const user = await getUser([req.body.username, req.body.password])
     if (user == null) res.send('error')
-    else res.send('success')
+    else res.send({outcome:'success', token: token})
   })
 
 app.get("/users", async (req, res) => {
   const userdata = await getUsers()
-  // console.log(userdata)
   res.send(userdata)
 })
 
 app.post("/createuser", async (req, res) => {
-  const create_res = await createUser([req.body.username, req.body.password])
-  console.log(create_res)
+  const create_res = await createUser(req.body)
+  // console.log(create_res)
   if (create_res) {
     res.send('success')
   }
@@ -36,8 +37,10 @@ app.post("/createuser", async (req, res) => {
 app.delete("/deleteuser/:id", async (req, res) => {
   const {id} = req.params
   const userdata = await deleteUser(id)
-  console.log(req.params)
-  res.send(userdata)
+  if (userdata.affectedRows > 0) {
+    res.send('success')
+  }
+  else res.send('error')
 })
 
 
@@ -46,29 +49,34 @@ app.get("/flights", async (req, res) => {
     res.send(flightdata)
   })
   
-app.get("/flights/:id", async (req, res) => {
-    const id = req.body.id
-    const note = await getFlight(id)
-    res.send(note)
+app.get("/flights/:flight_id", async (req, res) => {
+    const {flight_id} = req.params
+    // console.log(flight_id)
+    const flights = await searchFlights(flight_id)
+    res.send(flights)
 })
 
 app.delete("/flightdelete", async (req, res) => {
   const id = req.body.id
-  console.log(id)
+  // console.log(id)
   const ret = await deleteFlight(id)
   res.send(ret)
 })
 
 app.put("/flightupdate", async (req, res) => {
-  const data = req.body
+  const data = req.body.data
+  // console.log(data)
   const note = await updateFlight(data)
   res.send(note)
 })
 
 app.post("/flightcreate", async (req, res) => {
-  const data = req.body
-  const note = await createFlight(data)
-  res.send(note)
+  const data = req.body.data
+  const ret = await createFlight(data)
+  if (ret) {
+    res.send('success')
+  }
+  else res.send('error')
 })
 
 app.use((err, req, res, next) => {

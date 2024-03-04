@@ -1,17 +1,15 @@
-import React, {useState, useEffect, useRef} from "react"
+import React, {useState, useEffect} from "react"
 import Header from "./header"
 import { Table, Form, Button, Modal, Stack} from "react-bootstrap";
 import axios from "axios";
 
-
-
-function Flights({login, setlogin}) {
+function Flights() {
     const [data, setData] = useState([]);
     const [showEdit, setEditShow] = useState(false);
     const [showDelete, setDeleteShow] = useState(false);
     const [currentFlightLog, setCurrentFlightLog] = useState(null);
     const [addLog, setaddLog] = useState(false);
-    const inputRef = useRef(null);
+    const [search, setSearch] = useState('');
 
     const handleEditClose = () => setEditShow(false);
     const handleEditShow = () => setEditShow(true);
@@ -40,7 +38,7 @@ function Flights({login, setlogin}) {
     }
     
     async function updateLog(data) {
-      axios.put('http://localhost:8080/flightupdate')
+      axios.put('http://localhost:8080/flightupdate',{data})
       .then((res)=>{
         fetchData()
         console.log(res)
@@ -50,7 +48,7 @@ function Flights({login, setlogin}) {
     }
 
     async function createLog(data) {
-      axios.put('http://localhost:8080/flightcreate')
+      axios.post('http://localhost:8080/flightcreate', {data})
       .then((res)=>{
         fetchData()
         console.log(res)
@@ -58,6 +56,22 @@ function Flights({login, setlogin}) {
       .catch((err)=>console.log(err) )
       handleEditClose()
     }
+
+    async function searchFlights(flight_id) {
+      axios.get(`http://localhost:8080/flights/${flight_id}`)
+      .then((response) => {
+        setData(response.data)
+      })
+      .catch((error)=> console.log(error))
+    }
+
+    const handleSearchChange = (e) => {
+      const search = e.target.value;
+      setSearch(search)
+      if (search.trim()==='') fetchData()
+      else searchFlights(search)
+    }
+
     const fetchData = () => {
       axios.get('http://localhost:8080/flights')
           .then(function (response) {
@@ -71,17 +85,12 @@ function Flights({login, setlogin}) {
     useEffect(()=>fetchData(), []);
     const flightdatas = data.map( (row, index) => {
       const takeoffevent = new Date(row.takeoff)
-      var takeoffdatetime = takeoffevent.toLocaleString('en-SG', {timeZone: 'Singapore', hour12: false})
-      // .replace(/\/|, /g, '-').replace(' ', 'T').split(':').slice(0, -1).join(':')
-
       const landingevent = new Date(row.landing)
-      var landingdatetime = landingevent.toLocaleString('en-GB', {timeZone: 'Singapore', hour12: false})
-      // var createddate = new Date(row.created).toLocaleString('en-GB', {timeZone: 'Singapore'})
-      var last_updateddate = new Date(row.created).toLocaleString('en-GB', {timeZone: 'Singapore'})
-      const updated_row ={...row, 
-        takeoffdatetime:takeoffdatetime.replace(', ','T'),
-        landingdatetime:landingdatetime.replace(', ','T'),
-      }
+      const takeoffdatetime = takeoffevent.toLocaleString('en-GB', {timeZone: 'Asia/Singapore', hour12: false})
+      const landingdatetime = landingevent.toLocaleString('en-GB', {timeZone: 'Asia/Singapore', hour12: false})
+      const last_updateddate = new Date(row.last_updated).toLocaleString('en-GB', {timeZone: 'Asia/Singapore', hour12: false})
+      row.takeoff = row.takeoff.slice(0, 16)
+      row.landing = row.landing.slice(0, 16)
         return (
         <tr key={index}>
             <td>{row.flight_id}</td>
@@ -92,27 +101,34 @@ function Flights({login, setlogin}) {
             {/* <td>{createddate}</td> */}
             <td>{last_updateddate}</td>
             <td>
-                <Button variant="warning" onClick={() => {openEdit(updated_row)}} id={`edit-${row.id}`}>Edit</Button>{' '}
+                <Button variant="warning" onClick={() => {openEdit(row)}} id={`edit-${row.id}`}>Edit</Button>{' '}
                 <Button variant="danger" onClick={()=>{
-                  setCurrentFlightLog(updated_row)
-                  // setCurrentFlightLog(row)
+                  setCurrentFlightLog(row)
                   handleDeleteShow()
                   }} id={`delete-${row.id}`}>Delete</Button>{' '}
             </td>
         </tr>)
-        console.log(row.landingdatetime, row.takeoffdatetime)
     })
-    // console.log(login)
     return (
         <>
-            <Header login={login} setlogin={setlogin}/>
+            <Header/>
             <div className="px-3 container">
                 <Stack direction="horizontal" gap={3} className="my-3 ">
-                  <Form.Control className=" w-75" placeholder="Search by flight ID" />
+                  <Form.Control className=" w-75" placeholder="Search by flight ID" 
+                  value={search}
+                  onChange={handleSearchChange}
+                  />
                   <Button 
                     className="ms-auto"
                     onClick={()=>{
-                    setCurrentFlightLog(null)
+                    setCurrentFlightLog({
+                      id: '', 
+                      flight_id: '',
+                      tailNumber: '',
+                      takeoff: null,
+                      landing: null,
+                      duration: 0,
+                    })
                     setaddLog(true)
                     handleEditShow()
                     }}>Add Flight log
@@ -125,7 +141,7 @@ function Flights({login, setlogin}) {
                             <th>Tail Number</th>
                             <th>Takeoff</th>
                             <th>Landing</th>
-                            <th>Duration</th>
+                            <th>Duration (Mins)</th>
                             <th>Last Updated</th>
                             <th>Actions</th>
                         </tr>
@@ -146,8 +162,8 @@ function Flights({login, setlogin}) {
             <Form.Group className="me-auto" controlId="exampleForm.Control1">
               <Form.Label>FlightID</Form.Label>
               <Form.Control required type="text" 
-              value={currentFlightLog ? currentFlightLog.id : ''}
-              onChange={(e) => setCurrentFlightLog({...currentFlightLog, id: e.target.value})}
+              value={currentFlightLog ? currentFlightLog.flight_id : ''}
+              onChange={(e) => setCurrentFlightLog({...currentFlightLog, flight_id: e.target.value})}
               />
             </Form.Group>
             <Form.Group className="" controlId="exampleForm.Control1">
@@ -162,21 +178,19 @@ function Flights({login, setlogin}) {
             <Form.Group className="" controlId="exampleForm.Control1">
               <Form.Label>Takeoff</Form.Label>
               <Form.Control required type="datetime-local" 
-              ref={inputRef}
-              value={currentFlightLog ? currentFlightLog.takeoffdatetime : ''}
-              onChange={(e) => setCurrentFlightLog({...currentFlightLog, takeoffdatetime: e.target.value})}
+              value={currentFlightLog && currentFlightLog.takeoff ? currentFlightLog.takeoff: ''}
+              onChange={(e) => {setCurrentFlightLog({...currentFlightLog, takeoff: e.target.value})}}
               />
             </Form.Group>
             <Form.Group className="" controlId="exampleForm.Control1">
               <Form.Label>Landing</Form.Label>
               <Form.Control required type="datetime-local" 
-                ref={inputRef}
-              value={currentFlightLog ? currentFlightLog.landingdatetime : ''}
-              onChange={(e) => setCurrentFlightLog({...currentFlightLog, landingdatetime: e.target.value})}
+              value={currentFlightLog && currentFlightLog.landing ? currentFlightLog.landing: ''}
+              onChange={(e) => setCurrentFlightLog({...currentFlightLog, landing: e.target.value})}
               />
             </Form.Group>
             <Form.Group className="" controlId="exampleForm.Control1">
-            <Form.Label>Duration</Form.Label>
+            <Form.Label>Duration (Mins)</Form.Label>
             <Form.Control required type="number" min={0}
             value={currentFlightLog ? currentFlightLog.duration : ''}
             onChange={(e) => setCurrentFlightLog({...currentFlightLog, duration: e.target.value})}
@@ -189,7 +203,7 @@ function Flights({login, setlogin}) {
           <Button variant="danger" onClick={handleEditClose}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={() => (updateLog(null))}>
+          <Button variant="primary" onClick={() => (addLog?createLog(currentFlightLog):updateLog(currentFlightLog))}>
             Save Changes
           </Button>
         </Modal.Footer>

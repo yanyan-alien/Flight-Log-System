@@ -1,17 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {Route, Routes} from "react-router-dom";
 import Login from './login';
 import Flights from './flights';
 import Users from './users'
+import { useAuth } from "./auth";
 
 function Main() {
-    const [login, setlogin] = useState(false);
+    const { isLoggedIn  } = useAuth();
     return (
         <Routes>
-            <Route path="/" element={<Login login={login} setlogin={setlogin}/>}/>
-            <Route path="*" element={<Login login={login} setlogin={setlogin}/>}/>
-            <Route path="/flights" element={<Flights login={login} setlogin={setlogin}/>}/>
-            <Route path="/users" element={<Users login={login} setlogin={setlogin}/>}/>
+            <Route path="/" element={isLoggedIn?<Flights/>:<Login/>}/>
+            <Route path="*" element={isLoggedIn?<Flights/>:<Login/>}/>
+            <Route path="/flights" element={isLoggedIn?<Flights/>:<Login/>}/>
+            <Route path="/users" element={isLoggedIn?<Users/>:<Login/>}/>
         </Routes>
         // if login already default to flights else login
     )
