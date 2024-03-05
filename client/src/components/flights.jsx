@@ -1,28 +1,43 @@
-import React, {useState, useEffect} from "react"
+import React, {useState, useEffect, useRef} from "react"
 import Header from "./header"
-import { Table, Form, Button, Modal, Stack} from "react-bootstrap";
-import axios from "axios";
+import { Table, Form, Button, Modal, Stack} from "react-bootstrap"
+import axios from "axios"
 
 function Flights() {
-    const [data, setData] = useState([]);
-    const [showEdit, setEditShow] = useState(false);
-    const [showDelete, setDeleteShow] = useState(false);
-    const [currentFlightLog, setCurrentFlightLog] = useState(null);
-    const [addLog, setaddLog] = useState(false);
-    const [search, setSearch] = useState('');
+    const [data, setData] = useState([])
+    const [showEdit, setEditShow] = useState(false)
+    const [showDelete, setDeleteShow] = useState(false)
+    const [currentFlightLog, setCurrentFlightLog] = useState(null)
+    const [addLog, setaddLog] = useState(false)
+    const [search, setSearch] = useState('')
+    const [validated, setValidated] = useState(false)
+    const formRef = useRef(null) 
 
-    const handleEditClose = () => setEditShow(false);
-    const handleEditShow = () => setEditShow(true);
+    const handleEditClose = () => setEditShow(false)
+    const handleEditShow = () => setEditShow(true)
 
-    const handleDeleteClose = () => setDeleteShow(false);
-    const handleDeleteShow = () => setDeleteShow(true);
+    const handleDeleteClose = () => setDeleteShow(false)
+    const handleDeleteShow = () => setDeleteShow(true)
+
+
+    const resetForm = () => {
+      setValidated(false)
+      setCurrentFlightLog({
+        id: '', 
+        flight_id: '',
+        tailNumber: '',
+        takeoff: null,
+        landing: null,
+        duration: 0,
+      })
+    }
 
     function openEdit(row) {
       console.log(row)
-      setCurrentFlightLog(row);
+      setCurrentFlightLog(row)
       // console.log(row)
       setaddLog(false)
-      setEditShow(true);
+      setEditShow(true)
     }
 
     async function deleteLog(data) {
@@ -33,7 +48,6 @@ function Flights() {
         console.log(res)
       })
       .catch((err)=>console.log(err) )
-      
       handleDeleteClose()
     }
     
@@ -44,6 +58,7 @@ function Flights() {
         console.log(res)
       })
       .catch((err)=>console.log(err) )
+      resetForm()
       handleEditClose()
     }
 
@@ -54,6 +69,7 @@ function Flights() {
         console.log(res)
       })
       .catch((err)=>console.log(err) )
+      resetForm()
       handleEditClose()
     }
 
@@ -66,7 +82,7 @@ function Flights() {
     }
 
     const handleSearchChange = (e) => {
-      const search = e.target.value;
+      const search = e.target.value
       setSearch(search)
       if (search.trim()==='') fetchData()
       else searchFlights(search)
@@ -76,13 +92,13 @@ function Flights() {
       axios.get('http://localhost:8080/flights')
           .then(function (response) {
               // Set the data to state, this will trigger a re-render
-              setData(response.data);
+              setData(response.data)
           })
           .catch(function (error) {
-              console.log(error);
-          });
+              console.log(error)
+          })
   }
-    useEffect(()=>fetchData(), []);
+    useEffect(()=>fetchData(), [])
     const flightdatas = data.map( (row, index) => {
       const takeoffevent = new Date(row.takeoff)
       const landingevent = new Date(row.landing)
@@ -109,6 +125,21 @@ function Flights() {
             </td>
         </tr>)
     })
+
+    function handleSubmit(event) {
+      const form = formRef.current;
+      if (form.checkValidity() === false) {
+          event.preventDefault();
+          event.stopPropagation();
+      } else {
+          // Submit your form data
+          event.preventDefault();
+          addLog ? createLog(currentFlightLog) : updateLog(currentFlightLog);
+          handleEditClose();
+      }
+      setValidated(true);
+    }
+
     return (
         <>
             <Header/>
@@ -121,14 +152,7 @@ function Flights() {
                   <Button 
                     className="ms-auto"
                     onClick={()=>{
-                    setCurrentFlightLog({
-                      id: '', 
-                      flight_id: '',
-                      tailNumber: '',
-                      takeoff: null,
-                      landing: null,
-                      duration: 0,
-                    })
+                    resetForm()                    
                     setaddLog(true)
                     handleEditShow()
                     }}>Add Flight log
@@ -157,44 +181,64 @@ function Flights() {
           <Modal.Title>{addLog?"Add":"Edit"} Flight Log</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form>
+          <Form 
+            noValidate 
+            validated={validated} 
+            onSubmit={handleSubmit}
+            ref={formRef}
+          >
           <Stack direction="horizontal" gap={3} className="my-2">
-            <Form.Group className="me-auto" controlId="exampleForm.Control1">
+            <Form.Group className="me-auto" controlId="flightid-control">
               <Form.Label>FlightID</Form.Label>
               <Form.Control required type="text" 
               value={currentFlightLog ? currentFlightLog.flight_id : ''}
               onChange={(e) => setCurrentFlightLog({...currentFlightLog, flight_id: e.target.value})}
               />
+              <Form.Control.Feedback type="invalid">
+                Please provide a valid Flight ID
+              </Form.Control.Feedback>
             </Form.Group>
-            <Form.Group className="" controlId="exampleForm.Control1">
+            <Form.Group className="" controlId="tailnumber-control">
               <Form.Label>Tail Number</Form.Label>
               <Form.Control required type="text" 
               value={currentFlightLog ? currentFlightLog.tailNumber : ''}
               onChange={(e) => setCurrentFlightLog({...currentFlightLog, tailNumber: e.target.value})}
               />
+              <Form.Control.Feedback type="invalid">
+                Please provide a valid Tail Number
+              </Form.Control.Feedback>
             </Form.Group>
           </Stack>
           <Stack direction="vertical" gap={2} className="">
-            <Form.Group className="" controlId="exampleForm.Control1">
+            <Form.Group className="" controlId="takeoff-control">
               <Form.Label>Takeoff</Form.Label>
               <Form.Control required type="datetime-local" 
               value={currentFlightLog && currentFlightLog.takeoff ? currentFlightLog.takeoff: ''}
               onChange={(e) => {setCurrentFlightLog({...currentFlightLog, takeoff: e.target.value})}}
               />
+              <Form.Control.Feedback type="invalid">
+                Please provide a valid Landing date and time
+              </Form.Control.Feedback>
             </Form.Group>
-            <Form.Group className="" controlId="exampleForm.Control1">
+            <Form.Group className="" controlId="landing-control">
               <Form.Label>Landing</Form.Label>
               <Form.Control required type="datetime-local" 
               value={currentFlightLog && currentFlightLog.landing ? currentFlightLog.landing: ''}
               onChange={(e) => setCurrentFlightLog({...currentFlightLog, landing: e.target.value})}
               />
+              <Form.Control.Feedback type="invalid">
+                Please provide a valid Landing date and time
+              </Form.Control.Feedback>
             </Form.Group>
-            <Form.Group className="" controlId="exampleForm.Control1">
+            <Form.Group className="" controlId="duration-control">
             <Form.Label>Duration (Mins)</Form.Label>
             <Form.Control required type="number" min={0}
             value={currentFlightLog ? currentFlightLog.duration : ''}
             onChange={(e) => setCurrentFlightLog({...currentFlightLog, duration: e.target.value})}
             />
+            <Form.Control.Feedback type="invalid">
+                Please provide a valid duration in terms of minutes
+              </Form.Control.Feedback>
           </Form.Group>
           </Stack>        
           </Form>
@@ -203,7 +247,7 @@ function Flights() {
           <Button variant="danger" onClick={handleEditClose}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={() => (addLog?createLog(currentFlightLog):updateLog(currentFlightLog))}>
+          <Button variant="primary" onClick={handleSubmit}>
             Save Changes
           </Button>
         </Modal.Footer>

@@ -13,7 +13,7 @@ use flights;
 CREATE TABLE flights(
     id integer PRIMARY KEY AUTO_INCREMENT,
     flight_id VARCHAR(10) NOT NULL,
-    tailNumber VARCHAR(10) NOT NULL, 
+    tailNumber VARCHAR(20) NOT NULL, 
     takeoff TIMESTAMP NOT NULL,
     landing TIMESTAMP NOT NULL,
     duration integer NOT NULL,

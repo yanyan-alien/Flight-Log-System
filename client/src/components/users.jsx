@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react"
+import React, {useEffect, useState, useRef} from "react"
 import Header from "./header"
 import { Table, Form, Button, Stack, Container, Modal, Alert } from "react-bootstrap";
 import axios from "axios";
@@ -22,6 +22,8 @@ function Users() {
     const [id, setId] = useState(-1);
     const [show, setShow] = useState(false);
     const [message, setMessage] = useState('Invalid Credentials');
+    const [validated, setValidated] = useState(false)
+    const formRef = useRef(null) 
 
     const handleDeleteClose = () => setDeleteShow(false);
     const handleDeleteShow = () => setDeleteShow(true);
@@ -89,6 +91,19 @@ function Users() {
                 handleDeleteClose()
             })
     }
+
+    function handleSubmit(event) {
+        const form = formRef.current;
+        if (form.checkValidity() === false) {
+            event.preventDefault();
+            event.stopPropagation();
+        } else {
+            // Submit your form data
+            event.preventDefault()
+            createUser(createData)
+        }
+        setValidated(true)
+    }
     
 
     const userdatas = data.map( (row, index) => {
@@ -133,25 +148,38 @@ function Users() {
                 <Modal.Title>Add User</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <Form>
+                    <Form
+                        noValidate 
+                        validated={validated} 
+                        onSubmit={handleSubmit}
+                        ref={formRef}
+                    >
                         <Form.Group className="mb-3" controlId="formGroupEmail">
                             <Alert variant='danger' className=''show={show}>{message}</Alert>
                             <Form.Label>Username</Form.Label>
                             <Form.Control 
                                 type="text" 
                                 placeholder="username" 
+                                required
                                 value={createData?createData.uname:''}
                                 onChange={(e)=>{setCreateData({...createData, uname:e.target.value})}}
                             />
+                            <Form.Control.Feedback type="invalid">
+                                Please provide a valid username
+                            </Form.Control.Feedback>
                         </Form.Group>
                         <Form.Group className="mb-3" controlId="formGroupPassword">
                             <Form.Label>Password</Form.Label>
                             <Form.Control 
                                 type="password" 
                                 placeholder="Password" 
+                                required
                                 value={createData?createData.password:''} 
                                 onChange={(e)=>{setCreateData({...createData, password:e.target.value})}}
                             />
+                            <Form.Control.Feedback type="invalid">
+                                Please provide a valid password
+                            </Form.Control.Feedback>
                         </Form.Group>
                     </Form>
                 </Modal.Body>
@@ -159,7 +187,7 @@ function Users() {
                 <Button variant="danger" onClick={handleAddClose}>
                     Cancel
                 </Button>
-                <Button variant="primary" onClick={() => {createUser(createData)}}>
+                <Button variant="primary" onClick={handleSubmit}>
                     Yes
                 </Button>
                 </Modal.Footer>

@@ -12,7 +12,6 @@ app.use(cors())
 const token = 'SIMPLE_TOKEN'
 
 app.post("/login", async (req, res) => {
-    console.log(req.body)
     const user = await getUser([req.body.username, req.body.password])
     if (user == null) res.send('error')
     else res.send({outcome:'success', token: token})
@@ -25,7 +24,6 @@ app.get("/users", async (req, res) => {
 
 app.post("/createuser", async (req, res) => {
   const create_res = await createUser(req.body)
-  // console.log(create_res)
   if (create_res) {
     res.send('success')
   }
@@ -51,21 +49,18 @@ app.get("/flights", async (req, res) => {
   
 app.get("/flights/:flight_id", async (req, res) => {
     const {flight_id} = req.params
-    // console.log(flight_id)
     const flights = await searchFlights(flight_id)
     res.send(flights)
 })
 
 app.delete("/flightdelete", async (req, res) => {
   const id = req.body.id
-  // console.log(id)
   const ret = await deleteFlight(id)
   res.send(ret)
 })
 
 app.put("/flightupdate", async (req, res) => {
   const data = req.body.data
-  // console.log(data)
   const note = await updateFlight(data)
   res.send(note)
 })

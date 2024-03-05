@@ -32,16 +32,13 @@ export async function getFlights() {
 
 export async function searchFlights(flight_id) {
     const [rows] = await flightpool.query("SELECT * FROM flights WHERE flight_id LIKE ?", [`${flight_id}%`])
-    // console.log('in database', rows)
     return rows
 }
 
 export async function createUser(req) {
-    // console.log(req)
     var result = 0
     const [[count]] = await userpool.query(
         `SELECT COUNT(*) AS count FROM users WHERE username = ?`, req.username)
-    // console.log(count, count.count, 'count')
     if (count.count === 0) {
         const [create_result] = await userpool.query(
             `INSERT INTO users(username, password)
