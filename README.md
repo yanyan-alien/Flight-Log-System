@@ -16,7 +16,7 @@ These instructions are for ubuntu machines.
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 source ~/.bashrc
 nvm install node
-sudo install mysql-server;
+sudo apt install mysql-server
 mv .env_input .env
 npm install;
 cd client; npm install;
