@@ -1,0 +1,15 @@
+{
+  "name": "st-engineering",
+  "version": "1.0.0",
+  "description": "## Technology Used Built using the following - ReactJS (Frontend)     - react-router-dom     - react-bootstrap - Node.js + Express.js (Backend) - MySQL (Database) - App deployed on AWS EC2 instance (cloud hosting platform)",
+  "main": "index.js",
+  "scripts": {
+    "start": "concurrently \"cd server && node app.js\" \"cd client && npm start\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

@@ -3,16 +3,12 @@ import {Form, Button, Container, Row, Col, Alert} from 'react-bootstrap'
 import {useNavigate} from 'react-router-dom'
 import axios from 'axios' 
 import { useAuth } from './auth';
+import forge from 'node-forge'
 
-async function digestpw(pw) {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(pw)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
-  const hashHex = hashArray
-   .map((b) => b.toString(16).padStart(2, "0"))
-   .join(""); // convert bytes to hex string
- return hashHex
+function digestpw(pw) {
+  const md = forge.md.sha256.create();
+  md.update(pw);
+  return md.digest().toHex();
 }
 
 function Login() {
@@ -33,31 +29,29 @@ function Login() {
     }
     console.log(event.target[0].value, event.target[1].value)
     const uname = event.target[0].value
-
-    digestpw(event.target[1].value).then((digest) => {
-      axios.post('http://localhost:8080/login', {
-        username: uname,
-        password: digest
-      })
-      .then(function (response) {
-        console.log(response)
-        if (response.data.outcome==='success') {
-          localStorage.setItem('token', response.data.token)
-          setIsLoggedIn(true);
-          navigate('/flights')
-        }
-        else {
-          setMessage('Invalid Credentials')
-          setShow(true)
-        }
-      })
-      .catch(function (error) {
-        setMessage('Server Error')
-        setShow(true)
-        console.log(error);
-        document.getElementById("login-form").reset()
-      });
+    const digest = digestpw(event.target[1].value)
+    axios.post('http://localhost:8080/login', {
+      username: uname,
+      password: digest
     })
+    .then(function (response) {
+      console.log(response)
+      if (response.data.outcome==='success') {
+        localStorage.setItem('token', response.data.token)
+        setIsLoggedIn(true);
+        navigate('/flights')
+      }
+      else {
+        setMessage('Invalid Credentials')
+        setShow(true)
+      }
+    })
+    .catch(function (error) {
+      setMessage('Server Error')
+      setShow(true)
+      console.log(error);
+      document.getElementById("login-form").reset()
+    });
   }
     return (
       <Container>

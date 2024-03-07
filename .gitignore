@@ -3,3 +3,4 @@ client/build/
 server/node_modules/
 server/.env
 server/schematest.sql
+node_modules/

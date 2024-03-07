@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useRef} from "react"
 import Header from "./header"
-import { Table, Form, Button, Modal, Stack} from "react-bootstrap"
+import { Table, Form, Button, Modal, Stack, Alert} from "react-bootstrap"
 import axios from "axios"
 
 function Flights() {
@@ -11,6 +11,7 @@ function Flights() {
     const [addLog, setaddLog] = useState(false)
     const [search, setSearch] = useState('')
     const [validated, setValidated] = useState(false)
+    const [show, setShow] = useState(false)
     const formRef = useRef(null) 
 
     const handleEditClose = () => setEditShow(false)
@@ -37,6 +38,7 @@ function Flights() {
       setCurrentFlightLog(row)
       // console.log(row)
       setaddLog(false)
+      setShow(false)
       setEditShow(true)
     }
 
@@ -54,12 +56,23 @@ function Flights() {
     async function updateLog(data) {
       axios.put('http://localhost:8080/flightupdate',{data})
       .then((res)=>{
-        fetchData()
-        console.log(res)
+        if (res.data==='success') {
+          fetchData()
+          console.log(res)
+          resetForm()
+          handleEditClose()
+        }
+        else {
+          setShow(true)
+          console.log(res)          
+        }
       })
-      .catch((err)=>console.log(err) )
-      resetForm()
-      handleEditClose()
+      .catch((err)=>{
+        console.log(err) 
+        resetForm()
+        handleEditClose()
+      })
+      
     }
 
     async function createLog(data) {
@@ -67,6 +80,7 @@ function Flights() {
       .then((res)=>{
         fetchData()
         console.log(res)
+        // handleEditClose()
       })
       .catch((err)=>console.log(err) )
       resetForm()
@@ -134,8 +148,9 @@ function Flights() {
       } else {
           // Submit your form data
           event.preventDefault();
+
           addLog ? createLog(currentFlightLog) : updateLog(currentFlightLog);
-          handleEditClose();
+          // handleEditClose();
       }
       setValidated(true);
     }
@@ -154,6 +169,7 @@ function Flights() {
                     onClick={()=>{
                     resetForm()                    
                     setaddLog(true)
+                    setShow(false)
                     handleEditShow()
                     }}>Add Flight log
                   </Button>
@@ -187,6 +203,7 @@ function Flights() {
             onSubmit={handleSubmit}
             ref={formRef}
           >
+          <Alert variant='danger' className=''show={show}>Details not modified</Alert>
           <Stack direction="horizontal" gap={3} className="my-2">
             <Form.Group className="me-auto" controlId="flightid-control">
               <Form.Label>FlightID</Form.Label>

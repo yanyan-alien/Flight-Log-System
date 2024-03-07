@@ -61,8 +61,14 @@ app.delete("/flightdelete", async (req, res) => {
 
 app.put("/flightupdate", async (req, res) => {
   const data = req.body.data
-  const note = await updateFlight(data)
-  res.send(note)
+  const result = await updateFlight(data)
+  console.log(result)
+  if (result==-1){
+    res.send('No content modified')
+  }
+  else {
+    res.send('success')
+  }
 })
 
 app.post("/flightcreate", async (req, res) => {
