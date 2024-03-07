@@ -13,6 +13,9 @@ Built using the following
 These instructions are for ubuntu machines.
 1. Install all the dependencies
 ```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+source ~/.bashrc
+nvm install node
 sudo install mysql-server;
 mv .env_input .env
 npm install;
@@ -27,9 +30,6 @@ sudo cat /etc/mysql/debian.cnf
 ```bash
 npm run
 ```
-
-## Website 
-http://54.80.82.88/
 
 ## Credentials
 username: user1
